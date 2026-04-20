@@ -1,26 +1,4 @@
-# ── Dependencies ──
 node_modules/
-
-# ── Secrets & Environment ──
-.env
-.env.*
-!.env.example
 cookies.txt
-
-# ── Project Specific Inputs/Outputs ──
 Downloads/
 Links.txt
-
-# ── Logs ──
-@downloadedLinks.txt
-@failedLinks.txt
-
-# ── Editor & Tooling ──
-.vscode/
-.idea/
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-*.sw?
-.eslintcache
