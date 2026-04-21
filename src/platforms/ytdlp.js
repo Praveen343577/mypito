@@ -20,7 +20,7 @@ import { platformLabel }              from './detector.js';
  */
 export async function download(url, platform) {
   // 1 ── Fetch metadata so we know title / uploader before downloading
-  const meta = await fetchMeta(url);
+  const meta = await fetchMeta(url, platform);
 
   // 2 ── Determine output structure
   const isMusic  = platform === 'YouTubeMusic';
@@ -46,11 +46,13 @@ export async function download(url, platform) {
 // Metadata pre-fetch
 // ─────────────────────────────────────────────────────────────────────────────
 
-function fetchMeta(url) {
+function fetchMeta(url, platform) {
   return new Promise((resolve) => {
+    const format = platform === 'YouTubeMusic' ? config.YTDLP_AUDIO_FORMAT : config.YTDLP_VIDEO_FORMAT;
     const args = [
       '--no-download',
       '--playlist-items', '1',         // for playlists only fetch item 1's meta
+      '-f', format,
       '--print', '%(uploader)s|%(title)s|%(width)s|%(height)s',
       '--cookies', config.COOKIES_FILE,
       url,

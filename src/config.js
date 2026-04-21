@@ -22,11 +22,12 @@ const config = {
 
   // ── yt-dlp formats ────────────────────────────────────────────────────
   // Best video up to 4K (2160p) merged into MKV
-  YTDLP_VIDEO_FORMAT:
-    'bestvideo[height<=2160][ext=mp4]+bestaudio[ext=m4a]/' +
-    'bestvideo[height<=2160]+bestaudio/' +
-    'best[height<=2160]',
+  // YTDLP_VIDEO_FORMAT:
+  //   'bestvideo[height<=2160][ext=mkv]+bestaudio[ext=m4a]/' +
+  //   'bestvideo[height<=2160]+bestaudio/' +
+  //   'best[height<=2160]',
 
+  YTDLP_VIDEO_FORMAT: 'bestvideo+bestaudio/best',
   YTDLP_MERGE_FORMAT: 'mkv',
 
   // Best audio → FLAC

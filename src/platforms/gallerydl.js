@@ -60,9 +60,9 @@ function runGalleryDl(url, tmpDir) {
   return new Promise((resolve) => {
     const args = [
       '--cookies',              config.COOKIES_FILE,
-      '-D',                     tmpDir,        // exact output directory (no sub-folders)
+      '-d',                     tmpDir,        // exact output directory (no sub-folders)
       '--write-metadata',                       // create .json alongside each file
-      '--no-download-archive',                  // never skip based on archive
+      '--no-check-certificate',                 // force bypass of SSL errors
       url,
     ];
 
