@@ -20,8 +20,8 @@ import { platformLabel }                from './detector.js';
  * @returns {{ success: boolean, files: string[], reason?: string }}
  */
 export async function download(url, platform) {
-  const label   = platformLabel(platform);
-  const tmpDir  = fs.mkdtempSync(path.join(os.tmpdir(), 'galdl-'));
+  const label  = platformLabel(platform);
+  const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'galdl-'));
 
   const { outputDir, metaDir } = setupDirs(platform);
 
@@ -41,6 +41,9 @@ export async function download(url, platform) {
     cleanup(tmpDir);
     return { success: false, reason: runResult.reason ?? 'gallery-dl produced no files' };
   }
+
+  // Show 100% now that we have confirmed files
+  updateProgress({ progress: 100 });
 
   // Rename and move files to their permanent location
   const renamedNames = postProcess(tmpDir, files, outputDir, metaDir, url);
@@ -75,7 +78,8 @@ function runGalleryDl(url, tmpDir) {
         // gallery-dl prints the path to every downloaded file on stdout
         if (!line.endsWith('.json') && (isKnownMediaLine(line) || fs.existsSync(line))) {
           mediaCount++;
-          updateProgress({ mediaIndex: mediaCount, mediaTotal: 0 });
+          // Do NOT pass mediaTotal: 0 — that would overwrite any real value with zero
+          updateProgress({ mediaIndex: mediaCount });
         }
       }
     });
