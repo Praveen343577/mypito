@@ -60,12 +60,16 @@ export function updateProgress({ size, speed, progress, mediaIndex, mediaTotal }
 /** Mark a download finished — clears the active-item display. */
 export function markSuccess() {
   S.success++;
+  _eraseLastRender();
+  console.log(`${chalk.green('✔')} ${chalk.bold.cyan(`[${S.platform}]`)} ${chalk.white(`[${S.url}]`)} ${S.size ? chalk.gray(`(${S.size})`) : ''}`);
   _clearItem();
   render(true);
 }
 
 export function markFailed() {
   S.failed++;
+  _eraseLastRender();
+  console.log(`${chalk.red('✖')} ${chalk.bold.cyan(`[${S.platform}]`)} ${chalk.white(`[${S.url}]`)}`);
   _clearItem();
   render(true);
 }
@@ -125,7 +129,7 @@ function render(force = false) {
       chalk.white(`[${S.url}]`) + '  ' + counter
     );
 
-    lines.push(progressBar(S.progress));
+    // lines.push(progressBar(S.progress));
 
     lines.push(
       `size: ${chalk.bold(S.size || '—')}` +
@@ -178,14 +182,14 @@ function _clearItem() {
   S.statusLine = '';
 }
 
-function progressBar(pct) {
-  const W      = 50;
-  const filled = Math.round(Math.min(100, Math.max(0, pct)) / 100 * W);
-  const empty  = W - filled;
-  return (
-    '[' +
-    chalk.green('█'.repeat(filled)) +
-    chalk.gray('░'.repeat(empty)) +
-    `] ${pct}%`
-  );
-}
+// function progressBar(pct) {
+//   const W      = 50;
+//   const filled = Math.round(Math.min(100, Math.max(0, pct)) / 100 * W);
+//   const empty  = W - filled;
+//   return (
+//     '[' +
+//     chalk.green('█'.repeat(filled)) +
+//     chalk.gray('░'.repeat(empty)) +
+//     `] ${pct}%`
+//   );
+// }
