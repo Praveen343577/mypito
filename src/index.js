@@ -15,13 +15,13 @@ async function main() {
     hasError = true;
   }
 
-  if (!fs.existsSync(config.COOKIES_FILE)) {
-    console.error(chalk.red(`  ✗  cookies.txt not found at: ${config.COOKIES_FILE}`));
-    hasError = true;
-  }
+  // if (!fs.existsSync(config.COOKIES_FILE)) {
+  //   console.error(chalk.red(`  ✗  cookies.txt not found at: ${config.COOKIES_FILE}`));
+  //   hasError = true;
+  // }
 
   if (hasError) {
-    console.error(chalk.dim('\n  Place Links.txt and cookies.txt in the project root.\n'));
+    console.error(chalk.dim('\n  Place Links.txt in the project root.\n'));
     process.exit(1);
   }
 

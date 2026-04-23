@@ -54,7 +54,6 @@ function fetchMeta(url, platform) {
       '--playlist-items', '1',         // for playlists only fetch item 1's meta
       '-f', format,
       '--print', '%(uploader)s|%(title)s|%(width)s|%(height)s',
-      '--cookies', config.COOKIES_FILE,
       url,
     ];
 
@@ -102,7 +101,6 @@ function buildArgs(url, platform, meta, outputDir, metaDir) {
   const outputTemplate = path.join(outputDir, `${finalTitle}.%(ext)s`);
 
   const args = [
-    '--cookies',          config.COOKIES_FILE,
     '--output',           outputTemplate,
     '--paths',            `infojson:${metaDir}`,
     '--paths',            `thumbnail:${metaDir}`,

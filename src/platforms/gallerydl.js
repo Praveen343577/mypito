@@ -59,7 +59,6 @@ export async function download(url, platform) {
 function runGalleryDl(url, tmpDir) {
   return new Promise((resolve) => {
     const args = [
-      '--cookies',              config.COOKIES_FILE,
       '-d',                     tmpDir,        // exact output directory (no sub-folders)
       '--write-metadata',                       // create .json alongside each file
       '--no-check-certificate',                 // force bypass of SSL errors

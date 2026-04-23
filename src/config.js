@@ -6,7 +6,7 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const config = {
   // ── Input files (place these at the project root) ─────────────────────
   LINKS_FILE:   path.join(ROOT, 'Links.txt'),
-  COOKIES_FILE: path.join(ROOT, 'cookies.txt'),
+  // COOKIES_FILE: path.join(ROOT, 'cookies.txt'),
 
   // ── Where all media lands ──────────────────────────────────────────────
   DOWNLOAD_DIR: path.join(ROOT, 'Downloads'),
