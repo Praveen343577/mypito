@@ -1,7 +1,7 @@
-# File Tree: MYPITO
+# File Tree: mypito
 
-**Generated:** 4/20/2026, 10:28:04 PM
-**Root Path:** `c:\Users\1000863\Desktop\26mar26\MYPITO`
+**Generated:** 4/26/2026, 4:42:25 PM
+**Root Path:** `d:\Projects\Project_4\mypito`
 
 ```
 ├── 📁 src
@@ -16,9 +16,10 @@
 │   ├── 📄 logger.js
 │   ├── 📄 stats.js
 │   └── 📄 utils.js
-├── 📄 Links.txt
+├── ⚙️ .gitignore
+├── 📝 FileTree.md
 ├── 📝 README.md
-├── 📄 cookies.txt
+├── ⚙️ package-lock.json
 └── ⚙️ package.json
 ```
 
