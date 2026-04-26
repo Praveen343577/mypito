@@ -1,13 +1,13 @@
-import { spawn }  from 'child_process';
-import fs         from 'fs';
-import path       from 'path';
-import os         from 'os';
+import { spawn } from 'child_process';
+import fs from 'fs';
+import path from 'path';
+import os from 'os';
 
-import config                           from '../config.js';
+import config from '../config.js';
 import { isVideo, isImage, sanitizeFilename } from '../utils.js';
-import { setupDirs }                    from '../folders.js';
+import { setupDirs } from '../folders.js';
 import { setCurrentDownload, updateProgress } from '../stats.js';
-import { platformLabel }                from './detector.js';
+import { platformLabel } from './detector.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Public entry-point
@@ -20,7 +20,7 @@ import { platformLabel }                from './detector.js';
  * @returns {{ success: boolean, files: string[], reason?: string }}
  */
 export async function download(url, platform) {
-  const label  = platformLabel(platform);
+  const label = platformLabel(platform);
   const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'galdl-'));
 
   const { outputDir, metaDir } = setupDirs(platform);
@@ -37,16 +37,17 @@ export async function download(url, platform) {
 
   // Even if exit code was non-zero, if files landed in tmpDir treat as partial success
   const files = getAllFiles(tmpDir);
-  if (files.length === 0) {
+  const mediaFiles = files.filter(f => !f.endsWith('.json'));
+  if (mediaFiles.length === 0) {
     cleanup(tmpDir);
-    return { success: false, reason: runResult.reason ?? 'gallery-dl produced no files' };
+    return { success: false, reason: 'No media extracted (requires cookies or platform block)' };
   }
 
   // Show 100% now that we have confirmed files
   updateProgress({ progress: 100 });
 
   // Rename and move files to their permanent location
-  const renamedNames = postProcess(tmpDir, files, outputDir, metaDir, url);
+  const renamedNames = postProcess(tmpDir, files, outputDir, metaDir, url, platform);
 
   cleanup(tmpDir);
   return { success: true, files: renamedNames };
@@ -59,7 +60,7 @@ export async function download(url, platform) {
 function runGalleryDl(url, tmpDir) {
   return new Promise((resolve) => {
     const args = [
-      '-d',                     tmpDir,        // exact output directory (no sub-folders)
+      '-d', tmpDir,        // exact output directory (no sub-folders)
       '--write-metadata',                       // create .json alongside each file
       '--no-check-certificate',                 // force bypass of SSL errors
       url,
@@ -67,7 +68,7 @@ function runGalleryDl(url, tmpDir) {
 
     const proc = spawn('gallery-dl', args, { stdio: ['ignore', 'pipe', 'pipe'] });
 
-    let stderr     = '';
+    let stderr = '';
     let mediaCount = 0;
 
     // stdout: gallery-dl prints each downloaded file path on its own line
@@ -100,7 +101,7 @@ function runGalleryDl(url, tmpDir) {
         resolve({ success: true });
       } else {
         const reason = stderr.split('\n').find((l) => /error/i.test(l))?.trim()
-                    ?? 'gallery-dl exited with non-zero status';
+          ?? 'gallery-dl exited with non-zero status';
         resolve({ success: false, reason });
       }
     });
@@ -118,9 +119,9 @@ function parseGalleryDlProgress(line) {
     /([\d.]+\s*\w+)\s*\/\s*([\d.]+\s*\w+)\s+([\d.]+\s*[\w/]+)/i
   );
   if (fmtA) {
-    const dlNum  = parseSize(fmtA[1]);
+    const dlNum = parseSize(fmtA[1]);
     const totNum = parseSize(fmtA[2]);
-    const pct    = totNum > 0 ? (dlNum / totNum) * 100 : 0;
+    const pct = totNum > 0 ? (dlNum / totNum) * 100 : 0;
     updateProgress({ size: fmtA[2].trim(), speed: fmtA[3].trim(), progress: pct });
     return;
   }
@@ -148,12 +149,12 @@ function parseGalleryDlProgress(line) {
  * moves media to outputDir and metadata JSONs to metaDir.
  * @returns {string[]} base names (no extension) of renamed media files
  */
-function postProcess(tmpDir, allFiles, outputDir, metaDir, url) {
-  const metaFiles  = allFiles.filter((f) => f.endsWith('.json'));
+function postProcess(tmpDir, allFiles, outputDir, metaDir, url, platform) {
+  const metaFiles = allFiles.filter((f) => f.endsWith('.json'));
   const mediaFiles = allFiles.filter((f) => !f.endsWith('.json'));
 
   // Attempt to extract username from metadata JSONs
-  const username = extractUsername(metaFiles, url);
+  const username = extractUsername(metaFiles, url, platform);
 
   // Sort for stable ordering
   mediaFiles.sort();
@@ -169,7 +170,7 @@ function postProcess(tmpDir, allFiles, outputDir, metaDir, url) {
 
   // ── Videos → username v1, username v2, …
   videos.forEach((filePath, i) => {
-    const ext      = path.extname(filePath);
+    const ext = path.extname(filePath);
     const baseName = `${username} v${i + 1}`;
     safeMove(filePath, path.join(outputDir, `${baseName}${ext}`));
     renamedNames.push(baseName);
@@ -178,7 +179,7 @@ function postProcess(tmpDir, allFiles, outputDir, metaDir, url) {
 
   // ── Images → username p1, username p2, …
   images.forEach((filePath, i) => {
-    const ext      = path.extname(filePath);
+    const ext = path.extname(filePath);
     const baseName = `${username} p${i + 1}`;
     safeMove(filePath, path.join(outputDir, `${baseName}${ext}`));
     renamedNames.push(baseName);
@@ -212,7 +213,7 @@ function postProcess(tmpDir, allFiles, outputDir, metaDir, url) {
  */
 function moveMatchingMeta(mediaPath, metaFiles, metaDir, baseName) {
   const expected = mediaPath + '.json';
-  const idx      = metaFiles.indexOf(expected);
+  const idx = metaFiles.indexOf(expected);
   if (idx !== -1 && fs.existsSync(expected)) {
     safeMove(expected, path.join(metaDir, `${baseName}.json`));
     metaFiles.splice(idx, 1);   // mark as handled
@@ -220,30 +221,60 @@ function moveMatchingMeta(mediaPath, metaFiles, metaDir, baseName) {
 }
 
 /** Extract username from metadata JSONs; fall back to URL parsing */
-function extractUsername(metaFiles, url) {
+function extractUsername(metaFiles, url, platform) {
   for (const mf of metaFiles) {
     try {
       const data = JSON.parse(fs.readFileSync(mf, 'utf8'));
-      const name =
-        data?.owner?.username  ??
-        data?.user?.username   ??
-        data?.author?.name     ??
+
+      let username =
+        data?.pinner?.username ??
+        data?.pinner?.full_name ??
+        data?.owner?.username ??
+        data?.user?.username ??
+        data?.author?.name ??
         data?.author?.username ??
-        data?.user?.name       ??
-        data?.username         ??
+        data?.user?.name ??
+        data?.username ??
         null;
-      if (name) return sanitizeFilename(String(name));
+
+      const cleanRegex = /[^\w\s.,_\-!@#&()]/g;
+
+      if (username) {
+        username = username.replace(cleanRegex, '').trim();
+        if (username.length === 0) username = null;
+      }
+
+      // Pinterest-exclusive description appending
+      if (platform === 'Pinterest') {
+        let description =
+          data?.grid_title ??
+          data?.title ??
+          data?.seo_title ??
+          data?.description ??
+          null;
+
+        if (description) {
+          description = description.replace(cleanRegex, '').trim();
+          if (description.includes('|')) description = description.split('|')[0].trim();
+          if (description.length === 0) description = null;
+        }
+
+        if (username && description) return sanitizeFilename(`${username} - ${description}`);
+        if (description) return sanitizeFilename(description);
+      }
+
+      if (username) return sanitizeFilename(username);
+
     } catch { /* skip unreadable JSON */ }
   }
 
   // Fall back: try to extract handle from URL path
   try {
     const parts = new URL(url).pathname.split('/').filter(Boolean);
-    // Common patterns: /username/...  or  /@username/...
     const handle = parts.find((p) => p.startsWith('@'))?.slice(1)
-                ?? (parts[0] && !['p','reel','status','i','pin','pins'].includes(parts[0])
-                    ? parts[0]
-                    : null);
+      ?? (parts[0] && !['p', 'reel', 'status', 'i', 'pin', 'pins'].includes(parts[0])
+        ? parts[0]
+        : null);
     if (handle) return sanitizeFilename(handle);
   } catch { /* ignore bad URLs */ }
 
@@ -262,7 +293,16 @@ function getAllFiles(dir, result = []) {
 }
 
 function safeMove(src, dest) {
-  try { fs.renameSync(src, dest); } catch { /* already moved or missing */ }
+  try {
+    fs.renameSync(src, dest);
+  } catch (err) {
+    if (err.code === 'EXDEV') {
+      try {
+        fs.copyFileSync(src, dest);
+        fs.unlinkSync(src);
+      } catch { /* missing */ }
+    }
+  }
 }
 
 function cleanup(dir) {
